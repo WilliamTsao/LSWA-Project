@@ -11,6 +11,15 @@ apt-get install python-virtualenv -y
 export DEBIAN_FRONTEND=noninteractive
 apt-get -q -y install mysql-server -y
 
+# Install Docker Using Repository: https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository
+apt-get install apt-transport-https
+apt-get install ca-certificates
+apt-get install curl
+apt-get install software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+apt-get install docker-ce
+
 mkdir /home/ubuntu/tmp
 chmod -R 777 /home/ubuntu/tmp
 
@@ -41,14 +50,7 @@ cd depot
 git checkout new-deployment
 ./first_install.sh
 cd db
-# Install Docker Using Repository: https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository
-apt-get install apt-transport-https
-apt-get install ca-certificates
-apt-get install curl
-apt-get install software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-apt-get install docker-ce
+
 source run_docker_dbs.sh
 ./install_db.sh
 cd ../../
@@ -61,11 +63,21 @@ python manage.py migrate --database db1
 python manage.py migrate --database db2
 python manage.py collectstatic --noinput
 
+# Make directory for user created content (uploads and zips)
+cd ../
+mkdir uploads
+chgrp -R www-data uploads/
+chmod -R g+w uploads/
+mkdir zips
+chgrp -R www-data zips/
+chmod -R g+w zips/
+
+
 # Use the following config.
-cat <<EOF > /etc/apache2/sites-available/web.conf
+cat <<EOF > /etc/apache2/sites-available/scalica.conf
 WSGIScriptAlias / /var/www/site/web/web/wsgi.py
-WSGIDaemonProcess web python-path=/var/www/site/web:/var/www/site/depot/env/lib/python2.7/site-packages
-WSGIProcessGroup web
+WSGIDaemonProcess scalica python-path=/var/www/site/web:/var/www/site/depot/env/lib/python2.7/site-packages
+WSGIProcessGroup scalica
 <Directory /var/www/site/web/web>
   <Files wsgi.py>
     Require all granted
@@ -78,6 +90,6 @@ Alias /static/ /var/www/site/static/
 </Directory>
 
 EOF
-a2ensite web
+a2ensite scalica
 service apache2 reload
 # We should be able to serve now.

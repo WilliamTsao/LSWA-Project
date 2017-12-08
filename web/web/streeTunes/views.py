@@ -173,9 +173,10 @@ def upload(request):
 def genqr(request):
     if request.method == 'POST':
         musician_id = request.user.profile.musician_id
-        purchase_id = findId(Purchase, 16, musician.musician_id, True) + musician_id
-        album = Album.objects.get(_id=request.POST['album_id'])
-        set_user_for_sharding(album, musician_id)
+        purchase_id = findId(Purchase, 16, musician_id, True) + musician_id
+        album_query = Album.objects
+        set_user_for_sharding(album_query, musician_id)
+        album = album_query.get(_id=request.POST['album_id'])
         longitude = request.POST['longitude']
         latitude = request.POST['latitude']
         version_hash = createZip(album)
@@ -219,6 +220,7 @@ def analytics(request):
 # Helper functions:
 def createZip(album):
     songs = Song.objects.filter(album_id=album._id)
+    set_user_for_sharding(songs, album.musician_id)
     album_id = album._id
     musician_id = album.musician_id
     musician_dir = os.path.join(settings.ZIP_ROOT, musician_id)
@@ -234,7 +236,7 @@ def createZip(album):
 
     version_hash = hashlib.sha256()
     for song in songs:
-        version_hash.update(bytes(song._id, encoding='utf-8'))
+        version_hash.update(song._id)
         pass
     filename = version_hash.hexdigest()+'.zip'
     full_filename = os.path.join(album_dir, filename)
