@@ -61,6 +61,10 @@ def signup(request):
         return HttpResponseNotFound()
     pass
 
+@login_required
+def logout_view(request):
+    logout(request)
+    redirect('/streeTunes')
 
 @login_required
 def profile(request):
@@ -99,7 +103,7 @@ def dashboard(request):
         songs = Song.objects.filter(musician_id=musician_id, album_id=album._id)
         data.append({"album_id": album._id, "title": album.title, "songs": songs})
 
-    return render(request, 'web/dashboard.html', {"data": data})
+    return render(request, 'web/dashboard.html', {"data": data, 'username': request.user.username})
 
 @login_required
 def create_album(request):
@@ -123,7 +127,7 @@ def create_album(request):
 def upload(request):
     if request.method == "GET":
         form = UploadFileForm()
-        return render(request, 'web/upload', {'form': form})
+        return render(request, 'web/upload', {'username': request.user.username, 'form': form})
     else:
         musician_id = request.user.profile.musician_id
         song_id = findId(Song, 32)
@@ -167,7 +171,7 @@ def genqr(request):
 def qr(request, pid):
     if(pid is None):
         return HttpResponseNotFound()
-    return render(request, 'web/qr.html', {'purchase_id': pid})
+    return render(request, 'web/qr.html', {'username': request.user.username, 'purchase_id': pid})
 
 def analytics(request):
     if "genre" in request.GET:
