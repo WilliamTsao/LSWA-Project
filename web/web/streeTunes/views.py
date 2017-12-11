@@ -9,11 +9,11 @@ import os
 from django.conf import settings
 import hashlib
 from utils.hints import set_user_for_sharding
-from .routers import NUM_LOGICAL_SHARDS
+from .routers import NUM_PHYSICAL_SHARDS
 
-# Create your views here.
+# Anonymous views
 def index(request):
-    return render(request, 'web/index.html')
+        return redirect('/streeTunes/scan/')
 
 def scan(request):
     return render(request, 'web/scan.html')
@@ -68,11 +68,16 @@ def signup(request):
         return HttpResponseNotFound()
     pass
 
-@login_required
-def logout_view(request):
-    logout(request)
-    redirect('/streeTunes')
+def analytics(request):
+    all_fulfilled_purchases = []
+    for shard in range(0, NUM_PHYSICAL_SHARDS):
+        purchases = Purchase.objects.filter(fulfilled=True)
+        set_user_for_sharding(purchases, str(shard))
+        all_fulfilled_purchases = all_fulfilled_purchases + [p for p in purchases]
 
+    return render(request, 'web/analytics.html', {'purchases':all_fulfilled_purchases})
+
+# Authenticated views
 @login_required
 def profile(request):
     profile = request.user.profile
@@ -109,7 +114,7 @@ def dashboard(request):
         set_user_for_sharding(songs, musician_id)
         data.append({"album_id": album._id, "title": album.title, "songs": songs})
 
-    return render(request, 'web/dashboard.html', {"data": data, 'username': request.user.username})
+    return render(request, 'web/dashboard.html', {"data": data, "username":request.user.username})
 
 @login_required
 def create_album(request):
@@ -133,19 +138,12 @@ def create_album(request):
 def upload(request):
     if request.method == "GET":
         form = UploadFileForm()
-        return render(request, 'web/upload', {'username': request.user.username, 'form': form})
+        return render(request, 'web/upload', {'form': form})
     else:
         musician_id = request.user.profile.musician_id
         song_id = findId(Song, 32, musician_id, False)
 
-        # form = UploadFileForm({
-        #     'musician_id': musician_id,
-        #     'album_id': request.POST['album_id'],
-        #     '_id': song_id,
-        #     'title': request.POST['title'],
-        #     }, request.FILES)
 
-        # if form.is_valid():
         album_query = Album.objects
         set_user_for_sharding(album_query, musician_id)
         album = album_query.get(_id=request.POST['album_id'])
@@ -160,10 +158,6 @@ def upload(request):
         # set_user_for_sharding(new_song, musician_id)
         new_song.save()
         return redirect('/streeTunes/dashboard/')
-        # else:
-        #     #Error
-        #     print(form.errors)
-        #     return HttpResponse('failed')
         pass
     pass
 
@@ -173,7 +167,7 @@ def upload(request):
 def genqr(request):
     if request.method == 'POST':
         musician_id = request.user.profile.musician_id
-        purchase_id = findId(Purchase, 16, musician_id, True) + musician_id
+        purchase_id = findId(Purchase, 16, musician_id, True)
         album_query = Album.objects
         set_user_for_sharding(album_query, musician_id)
         album = album_query.get(_id=request.POST['album_id'])
@@ -191,30 +185,7 @@ def genqr(request):
 def qr(request, pid):
     if(pid is None):
         return HttpResponseNotFound()
-    return render(request, 'web/qr.html', {'username': request.user.username, 'purchase_id': pid})
-
-def analytics(request):
-    if "genre" in request.GET:
-        genres = request.GET.getlist('genre')
-    else:
-        genres = ['jazz', 'classical', 'pop', 'blues']
-    if 'weekday' in request.GET and request.GET['weekday'] != 'Any':
-        weekday = [int(request.GET['weekday'])]
-    else:
-        weekday = [1, 2, 3, 4, 5, 6, 7]
-    if 'gender' in request.GET and request.GET['gender'] != 'Any':
-        gender = [request.GET['gender']]
-    else:
-        gender = ['Male', 'Female', None]
-
-    all_fulfilled_purchases = []
-    for shard in range(0, NUM_LOGICAL_SHARDS):
-        purchases = Purchase.objects.filter(fulfilled=True, musician_id__genre__in=genres, musician_id__gender__in = gender, time__week_day__in=weekday)
-        set_user_for_sharding(purchases, shard)
-        all_fulfilled_purchases = all_fulfilled_purchases + [p for p in purchases]
-
-    print(purchases)
-    return render(request, 'web/analytics.html', {'purchases':all_fulfilled_purchases})
+    return render(request, 'web/qr.html', {'purchase_id': pid, "username":request.user.username})
 
 ################################################################################
 # Helper functions:

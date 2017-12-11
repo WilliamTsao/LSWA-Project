@@ -22,18 +22,16 @@
         <input type='file' name='media'/>
         <input type='submit'>
     </form>
-
+    <hr>
     <div class='all_songs'>
         {% for album in data %}
         <section class='ablum'>
             <h2>{{album.title}}</h2>
-            <button>Remove Album</button>
-            {% for song in album.songs %}
-                <div class='song'>
-                    <h3>{{song.title}}</h3>
-                    <button>Remove Song</button>
-                </div>
-            {% endfor %}
+            <ul class='song'>
+                {% for song in album.songs %}
+                <li>{{song.title}}</li>
+                {% endfor %}
+            </ul>
         </section>
         <form action='/streeTunes/genqr/' id='{{album.album_id}}' method="POST">
             {% csrf_token %}
