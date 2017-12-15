@@ -2,7 +2,7 @@
 # StreeTunes
 
 ## Overview
-StreeTunes is a web based application where street musicians can store their music and create unique, single-use QR (Quick-Response), codes to share to purchasers who are interested in hearing more of their music. StreeTunes also provides extensive data and analytics about download volume so that artists can optimize their distribution efforts. A QR code is only valid for scan ONCE. Upon clicking the download link generated from a scanned QR, it's path is deleted from the database of valid paths. 
+StreeTunes is a web based application where street musicians can store their music and create unique, single-use QR (Quick-Response), codes to share to purchasers who are interested in hearing more of their music. StreeTunes also provides extensive data and analytics about download volume so that artists can optimize their distribution efforts. A QR code is only valid for scan ONCE. Upon clicking the download link generated from a scanned QR, it's path is deleted from the database of valid paths.
 
 Our application helps street musicians connect to their listeners in a more modern way, but providing both the musician and their consumer a technology-friendly way to share their music. Our application will also help them reduce costs and increase business on their end since they will not have to go out of their way to buy and produce actual CDs!
 

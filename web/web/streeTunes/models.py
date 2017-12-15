@@ -5,6 +5,7 @@ from django.dispatch import receiver
 import uuid
 from django.contrib.auth.forms import UserCreationForm
 from django.forms import ModelForm
+from utils.hints import set_user_for_sharding
 
 
 
@@ -20,6 +21,8 @@ class Profile(models.Model):
     gender = models.CharField(max_length=10, null=True, default=None)
     age = models.IntegerField(null=True, default=None)
     genre = models.CharField(max_length=10, null=True, default=None)
+    class Meta:
+        app_label = 'auth'
     pass
 
 
@@ -30,21 +33,24 @@ class Profile(models.Model):
 # https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 
 # Automaticaly create a Profile for every user created
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        musician_id = uuid.uuid4().hex[0:16]
-        while(Profile.objects.filter(musician_id=musician_id).exists()):
-            musician_id = uuid.uuid4().hex[0:16]
-        Profile.objects.create(auth_user=instance, musician_id=musician_id)
-        pass
-    pass
-
-# Automaticaly save Profile when user saves
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
-    pass
+# @receiver(post_save, sender=User)
+# def create_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         musician_id = uuid.uuid4().hex[0:16]
+#         profile_querry = Profile.objects
+#         set_user_for_sharding(profile_querry, int(musician_id,16))
+#         while(profile_querry.filter(musician_id=musician_id).exists()):
+#             musician_id = uuid.uuid4().hex[0:16]
+#             set_user_for_sharding(profile_querry, int(musician_id,16))
+#         profile_querry.create(auth_user=instance, musician_id=musician_id)
+#         pass
+#     pass
+#
+# # Automaticaly save Profile when user saves
+# @receiver(post_save, sender=User)
+# def save_user_profile(sender, instance, **kwargs):
+#     instance.profile.save()
+#     pass
 
 #######################################################
 
@@ -57,7 +63,7 @@ class Album(models.Model):
     """
     _id = models.CharField(max_length=16, primary_key=True)
     title = models.CharField(max_length=50)
-    musician_id = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    musician_id = models.CharField(max_length=16)
 
 class CreateAlbumForm(ModelForm):
     class Meta:
@@ -78,7 +84,7 @@ class Purchase(models.Model):
         * fulfilled shows if a purchase was completed (ie. end user downloaded the album)
     """
     _id = models.CharField(max_length=32, primary_key=True)
-    musician_id = models.ForeignKey(Profile, related_name='musician_of_purchase')
+    musician_id = models.CharField(max_length=16)
     album_id = models.ForeignKey(Album, related_name='album_of_purchase')
     time = models.DateTimeField(auto_now_add=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
@@ -93,7 +99,7 @@ def user_directory_path(instance, filename):
     """
         file will be uploaded to MEDIA_ROOT/<musician_id>/<album_id>/<song_id>/<filename>
     """
-    return '{0}/{1}/{2}/{3}'.format(instance.musician_id.musician_id, instance.album_id._id, instance._id, instance.title+"."+filename.split('.')[-1])
+    return '{0}/{1}/{2}/{3}'.format(instance.musician_id, instance.album_id._id, instance._id, instance.title+"."+filename.split('.')[-1])
 
 
 class Song(models.Model):
@@ -106,7 +112,7 @@ class Song(models.Model):
     _id = models.CharField(max_length=32, primary_key=True)
     album_id = models.ForeignKey(Album, related_name='album_of_song')
     title = models.CharField(max_length=50)
-    musician_id = models.ForeignKey(Profile, related_name='musician_of_song')
+    musician_id = models.CharField(max_length=16)
     media = models.FileField(upload_to=user_directory_path)
     pass
 
