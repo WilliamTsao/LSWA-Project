@@ -36,7 +36,7 @@ The application will store User, Profile, Album, Purchase, Song
 5. as a musician (already-registered user) I can update my profile details with details about my Gender, Music Genre, and Age
 
 ## Test Account Created
-* Site URL: https://184.72.100.213/streeTunes
+* Site URL: https://streeTunes.williamtsao.com/streeTunes
 	* Please open in Chrome
 	* The browser will tell you your connection "is not private" through using HTTPS
 	* Please click "Advanced", then "Proceed"
