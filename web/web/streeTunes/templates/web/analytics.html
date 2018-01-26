@@ -3,7 +3,7 @@
 {% block content %}
 {% load staticfiles %}
 
-<form action='/streeTunes/analytics/' method='GET'>
+<!-- <form action='/streeTunes/analytics/' method='GET'>
     <label>Day of Week</label>
     <input type='radio' name='weekday' value='Any' checked required>Any day of the week</input>
     <input type='radio' name='weekday' value='1'> Sunday</input>
@@ -25,8 +25,8 @@
     <input type='checkbox' name='genre' value='classical'>  Classical</input>
     <input type='checkbox' name='genre' value='pop'>  Pop</input>
     <br>
-    <input type="submit" value='Get Data'/>
-</form>
+    <input type="submit" value='Filter'/>
+</form> -->
 
 <style>
  #map {
@@ -35,27 +35,23 @@
  }
 </style>
 
-<div>
-        {% for p in purchases%}
-        <li>Time: {{p.time}}</li>
-        <li>longitude: {{p.longitude}}</li>
-        <li>latitude: {{p.latitude}}</li>
-        {% endfor %}
-</div>
-
 <div id='map'></div>
 
 <label>Hour</label>
 
 <input type="range" min="0" max="23" step="1" name='hour' id='hour'>
-<p id='hourValue'></p>
+<div id='hourValue'></div>
 
 <script type="text/javascript" src="/static/js/jquery.min.js"></script>
-<script src="http://maps.google.com/maps/api/js?key=AIzaSyBZNSe98eYW5Vfw8sYA6BoBfRArVGOZbUU" type="text/javascript"></script>
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZNSe98eYW5Vfw8sYA6BoBfRArVGOZbUU">
+</script>
+
 <script type="text/javascript">
     var hourVal = $('#hour').val()
     var locations = getLocations(hourVal)
     var map = makemap()
+    var markers = []
     plotOnMap(locations)
 
 
@@ -65,28 +61,29 @@
     })
 
 
-    $('#hour').on("change", function() {
+    $('#hour').on("change mousemove", function() {
         locations = getLocations(this.value)
-        map = makemap()
+        deleteMarkers()
         plotOnMap(locations)
     });
 
     function makemap(){
-        var map = new google.maps.Map(document.getElementById('map'), {
+        var map = new window.google.maps.Map(document.getElementById('map'), {
             zoom: 12,
-            center: new google.maps.LatLng(40.785091, -73.968285),
-            mapTypeId: google.maps.MapTypeId.ROADMAP
+            center: new window.google.maps.LatLng(40.785091, -73.968285),
+            mapTypeId: window.google.maps.MapTypeId.ROADMAP
         });
         return map
     }
 
     function plotOnMap(locations){
         for (var i = 0; i < locations.length; i++) {
-            var marker = new google.maps.Marker({
-                position: new google.maps.LatLng(locations[i]['latitude'], locations[i]['longitude']),
+
+            var marker = new window.google.maps.Marker({
+                position: new window.google.maps.LatLng(locations[i]['latitude'], locations[i]['longitude']),
                 map: map,
                 icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
+                    path: window.google.maps.SymbolPath.CIRCLE,
                     fillColor: '#F00',
                     fillOpacity: 0.3,
                     strokeColor: '#F00',
@@ -95,14 +92,15 @@
                     scale: 5
                 }
             });
+            markers.push(marker)
         }
     }
+
     function getLocations(hourVal){
         let locations = []
             {% for p in purchases %}
             var utcDate = '{{p.time.isoformat}}'
             var localDate = new Date(utcDate);
-            console.log(utcDate)
             console.log(localDate)
             if(localDate.getHours() == hourVal){
                 locations.push({'time':'{{p.time}}', 'latitude':{{p.latitude}}, 'longitude':{{p.longitude}}})
@@ -110,6 +108,19 @@
             {% endfor %}
 
         return locations
+    }
+
+    // Sets the map on all markers in the array.
+    function setMapOnAll(map) {
+        for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(map);
+        }
+    }
+
+    // Removes the markers from the map
+    function deleteMarkers() {
+        setMapOnAll(null);
+        markers = [];
     }
 </script>
 

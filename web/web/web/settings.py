@@ -23,15 +23,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'pwaem9qd831kyqs=mp)hx^6(^-fed%b&4u#t5f_m+08u9hhi4_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 INSTALLED_APPS = [
     'streeTunes.apps.StreetunesConfig',
+    'utils',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -48,7 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+)
 
 ROOT_URLCONF = 'web.urls'
 
@@ -76,22 +82,13 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-# Database
 # DATABASES = {
-#   'default': {
-#     'ENGINE': 'django.db.backends.mysql',
-#     'OPTIONS': {
-#       'read_default_file': os.path.join(BASE_DIR, '..', 'LSWA-Project', 'db', 'my.cnf'),
-#     },
-#   }
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
 # }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
+execfile(os.path.join(BASE_DIR, '..', 'depot', 'db', 'db_settings.py'))
 
 
 # Password validation
@@ -134,9 +131,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/site/static/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
-ZIP_ROOT = os.path.join(BASE_DIR, 'zips')
+MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'uploads')
+ZIP_ROOT = os.path.join(BASE_DIR, '..', 'zips')
 
 LOGIN_URL = '/streeTunes/login/'
 LOGIN_REDIRECT_URL = '/streeTunes/dashboard'
